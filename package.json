@@ -1,0 +1,26 @@
+{
+  "name": "mf-monorepo",
+  "private": true,
+  "devDependencies": {
+    "@module-federation/rsbuild-plugin": "^0.19.1",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react": "^7.37.5",
+    "prettier": "^3.6.2"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:passport": "pnpm --filter passport-form dev",
+    "dev:host": "pnpm --filter host-app dev",
+    "dev": "concurrently \"pnpm dev:passport\" \"pnpm dev:host\""
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "react-hook-form": "^7.63.0",
+    "zod": "^4.1.9"
+  }
+}

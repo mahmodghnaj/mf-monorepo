@@ -1,0 +1,37 @@
+.wizard {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background: #fff;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
+
+button {
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #ddd;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: #1976d2;
+  color: white;
+}
+
+button.secondary {
+  background: #eee;
+}
