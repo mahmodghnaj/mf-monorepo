@@ -1,36 +1,117 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .inputGroup {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.rowGroup {
+  display: flex;
+  gap: 1rem;
 }
 
 .label {
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #222;
 }
 
 .input,
-.fileInput,
-.select {
-  padding: 0.5rem;
+.dateInput {
+  //flex: 1;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
   border: 1px solid #ccc;
-  border-radius: 6px;
   font-size: 1rem;
+  background: #f9f9fb;
+  transition: all 0.2s ease;
 }
 
 .input:focus,
-.fileInput:focus,
-.select:focus {
-  outline: 2px solid #1976d2;
+.dateInput:focus {
+  outline: none;
   border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+  background: #fff;
+}
+
+.fileInput {
+  display: none;
+}
+
+.browseButton {
+  margin-top: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  background: #1976d2;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.browseButton:hover {
+  background: #1459a8;
+}
+
+.fileInfo {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  background: #f9f9fb;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
 }
 
 .error {
   color: #d32f2f;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+  font-weight: 500;
+}
+.fileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.fileLabel {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #222;
+}
+
+.browseButton {
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #1976d2;
+  background: transparent;
+  color: #1976d2;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.browseButton:hover {
+  background: #1976d2;
+  color: #fff;
 }

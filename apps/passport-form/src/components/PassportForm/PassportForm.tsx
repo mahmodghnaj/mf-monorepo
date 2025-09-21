@@ -1,213 +1,174 @@
-import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import styles from "./index.module.css";
-import type { PassportFormProps, PassportData } from "./types";
-import { fileToBase64 } from "../../utils/file";
+import React, { useId, useEffect, useRef } from 'react';
+import { useForm, Controller, useFormState, useWatch } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import styles from './index.module.css';
+import type { PassportData } from '../../types/passport';
+import type { PassportFormProps } from './types';
+import { fileToBase64, fileSchema } from '../../utils/file';
+import InputField from './InputField';
 
-type FormValues = {
-  passportNumber: string;
-  firstName: string;
-  lastName: string;
-  issueDate: string;
-  expiryDate: string;
-  document: FileList;
-};
+const schema = z
+  .object({
+    passportNumber: z.string().min(1, 'Passport number is required'),
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
+    issueDate: z.string().min(1, 'Issue date is required'),
+    expiryDate: z.string().min(1, 'Expiry date is required'),
+    document: fileSchema,
+  })
+  .refine((data) => new Date(data.expiryDate) > new Date(data.issueDate), {
+    message: 'Expiry date must be after Issue date',
+    path: ['expiryDate'],
+  });
 
-const PassportForm: React.FC<PassportFormProps> = ({
-  onUpdate,
-  initialData,
-}) => {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setError,
-    formState: { errors, isValid },
-  } = useForm<FormValues>({
-    mode: "onChange",
+type FormValues = z.infer<typeof schema>;
+
+const PassportForm: React.FC<PassportFormProps> = ({ onUpdate, initialData }) => {
+  const id = useId();
+  const lastPayload = useRef<{ valid: boolean; data: PassportData | null } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const { register, control, handleSubmit, getValues } = useForm<FormValues>({
+    mode: 'onChange',
+    resolver: zodResolver(schema),
     defaultValues: {
-      passportNumber: initialData?.passportNumber ?? "",
-      firstName: initialData?.firstName ?? "",
-      lastName: initialData?.lastName ?? "",
-      issueDate: initialData?.issueDate ?? "",
-      expiryDate: initialData?.expiryDate ?? "",
+      passportNumber: initialData?.passportNumber ?? '',
+      firstName: initialData?.firstName ?? '',
+      lastName: initialData?.lastName ?? '',
+      issueDate: initialData?.issueDate ?? '',
+      expiryDate: initialData?.expiryDate ?? '',
+      document: initialData?.document?.file,
     },
   });
 
-  const values = watch();
+  const { errors, isValid } = useFormState({ control });
+  const watchedValues = useWatch({ control });
 
-  // Validation logic + emit state to host
+  const buildPayload = async () => {
+    const { passportNumber, firstName, lastName, issueDate, expiryDate, document } = getValues();
+    if (!document?.[0]) return null;
+    const file = document[0];
+    return {
+      passportNumber,
+      firstName,
+      lastName,
+      issueDate,
+      expiryDate,
+      document: {
+        fileName: file.name,
+        mimeType: file.type,
+        base64: await fileToBase64(file),
+        file: document,
+      },
+    };
+  };
+
   useEffect(() => {
-    const validateAndEmit = async () => {
-      try {
-        if (
-          !values.passportNumber ||
-          !values.firstName ||
-          !values.lastName ||
-          !values.issueDate ||
-          !values.expiryDate ||
-          !values.document?.[0]
-        ) {
-          onUpdate?.({ valid: false, data: null });
-          return;
-        }
+    const update = async () => {
+      const payload = isValid ? await buildPayload() : null;
+      const newPayload = { valid: isValid, data: payload };
 
-        const issueDate = new Date(values.issueDate);
-        const expiryDate = new Date(values.expiryDate);
-
-        if (expiryDate <= issueDate) {
-          setError("expiryDate", {
-            type: "manual",
-            message: "Expiry date must be after Issue date",
-          });
-          onUpdate?.({ valid: false, data: null });
-          return;
-        }
-
-        const file = values.document[0];
-        const allowedTypes = [
-          "application/pdf",
-          "image/png",
-          "image/jpeg",
-          "image/jpg",
-        ];
-        if (!allowedTypes.includes(file.type)) {
-          setError("document", {
-            type: "manual",
-            message: "Only PDF, PNG, JPEG, JPG allowed",
-          });
-          onUpdate?.({ valid: false, data: null });
-          return;
-        }
-
-        const base64 = await fileToBase64(file);
-
-        const payload: PassportData = {
-          passportNumber: values.passportNumber,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          issueDate: values.issueDate,
-          expiryDate: values.expiryDate,
-          document: {
-            fileName: file.name,
-            mimeType: file.type,
-            base64,
-          },
-        };
-
-        onUpdate?.({ valid: true, data: payload });
-      } catch {
-        onUpdate?.({ valid: false, data: null });
+      if (JSON.stringify(lastPayload.current) !== JSON.stringify(newPayload)) {
+        lastPayload.current = newPayload;
+        onUpdate?.(newPayload);
       }
     };
-
-    validateAndEmit();
-  }, [values, setError, onUpdate]);
+    update();
+  }, [watchedValues, isValid]);
 
   return (
-    <form
-      className={styles.form}
-      onSubmit={(e) => e.preventDefault()}
-      aria-label="Passport Form"
-    >
-      <div className={styles.inputGroup}>
-        <label htmlFor="passportNumber" className={styles.label}>
-          Passport Number
-        </label>
-        <input
-          id="passportNumber"
-          className={styles.input}
-          {...register("passportNumber", { required: "Required" })}
+    <form className={styles.form} onSubmit={(e) => e.preventDefault()} aria-label="Passport Form">
+      <InputField
+        id={`${id}-passportNumber`}
+        label="Passport Number*"
+        placeholder="e.g. A1234567"
+        error={errors.passportNumber?.message}
+        register={register}
+        name="passportNumber"
+      />
+
+      <div className={styles.rowGroup}>
+        <InputField
+          id={`${id}-firstName`}
+          label="First Name*"
+          placeholder="First name"
+          error={errors.firstName?.message}
+          register={register}
+          name="firstName"
         />
-        {errors.passportNumber && (
-          <span className={styles.error} role="alert">
-            {errors.passportNumber.message}
-          </span>
-        )}
+        <InputField
+          id={`${id}-lastName`}
+          label="Last Name*"
+          placeholder="Last name"
+          error={errors.lastName?.message}
+          register={register}
+          name="lastName"
+        />
       </div>
 
-      <div className={styles.inputGroup}>
-        <label htmlFor="firstName" className={styles.label}>
-          First Name
-        </label>
-        <input
-          id="firstName"
-          className={styles.input}
-          {...register("firstName", { required: "Required" })}
-        />
-        {errors.firstName && (
-          <span className={styles.error} role="alert">
-            {errors.firstName.message}
-          </span>
-        )}
-      </div>
-
-      <div className={styles.inputGroup}>
-        <label htmlFor="lastName" className={styles.label}>
-          Last Name
-        </label>
-        <input
-          id="lastName"
-          className={styles.input}
-          {...register("lastName", { required: "Required" })}
-        />
-        {errors.lastName && (
-          <span className={styles.error} role="alert">
-            {errors.lastName.message}
-          </span>
-        )}
-      </div>
-
-      <div className={styles.inputGroup}>
-        <label htmlFor="issueDate" className={styles.label}>
-          Issue Date
-        </label>
-        <input
-          id="issueDate"
+      <div className={styles.rowGroup}>
+        <InputField
+          id={`${id}-issueDate`}
+          label="Issue Date*"
           type="date"
-          className={styles.input}
-          {...register("issueDate", { required: "Required" })}
+          error={errors.issueDate?.message}
+          register={register}
+          name="issueDate"
         />
-        {errors.issueDate && (
-          <span className={styles.error} role="alert">
-            {errors.issueDate.message}
-          </span>
-        )}
-      </div>
-
-      <div className={styles.inputGroup}>
-        <label htmlFor="expiryDate" className={styles.label}>
-          Expiry Date
-        </label>
-        <input
-          id="expiryDate"
+        <InputField
+          id={`${id}-expiryDate`}
+          label="Expiry Date*"
           type="date"
-          className={styles.input}
-          {...register("expiryDate", { required: "Required" })}
+          error={errors.expiryDate?.message}
+          register={register}
+          name="expiryDate"
         />
-        {errors.expiryDate && (
-          <span className={styles.error} role="alert">
-            {errors.expiryDate.message}
-          </span>
-        )}
       </div>
 
       <div className={styles.inputGroup}>
-        <label htmlFor="document" className={styles.label}>
-          Passport Document
-        </label>
-        <input
-          id="document"
-          type="file"
-          accept=".pdf,.png,.jpeg,.jpg"
-          className={styles.fileInput}
-          {...register("document", { required: "Required" })}
+        <div className={styles.fileRow}>
+          <label className={styles.fileLabel}>Passport Document*</label>
+          <button
+            type="button"
+            className={styles.browseButton}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Upload
+          </button>
+        </div>
+
+        <Controller
+          control={control}
+          name="document"
+          render={({ field }) => {
+            const file = field.value?.[0];
+            return (
+              <>
+                <input
+                  ref={fileInputRef}
+                  id={`${id}-document`}
+                  type="file"
+                  accept=".pdf,.png,.jpeg,.jpg"
+                  className={styles.fileInput}
+                  onChange={(e) => field.onChange(e.target.files)}
+                />
+
+                {file && (
+                  <div className={styles.fileInfo}>
+                    {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                  </div>
+                )}
+
+                {!file && initialData?.document && (
+                  <div className={styles.fileInfo}>{initialData.document.fileName}</div>
+                )}
+
+                {errors.document && <div className={styles.error}>{errors.document.message}</div>}
+              </>
+            );
+          }}
         />
-        {errors.document && (
-          <span className={styles.error} role="alert">
-            {errors.document.message}
-          </span>
-        )}
       </div>
     </form>
   );

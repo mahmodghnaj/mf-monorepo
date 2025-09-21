@@ -1,61 +1,60 @@
-import React, { useEffect, useState } from "react";
-import styles from "./index.module.css";
-import { IdFormProps, IdInfo } from "./types";
+import React, { useEffect, useId } from 'react';
+import { useForm, useFormState, useWatch } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import styles from './index.module.css';
+import type { IdFormProps } from './types';
 
 const nationalities = [
-  { code: "AE", label: "United Arab Emirates" },
-  { code: "EG", label: "Egypt" },
-  { code: "SA", label: "Saudi Arabia" },
-  { code: "JO", label: "Jordan" },
-  { code: "LB", label: "Lebanon" },
+  { code: 'AE', label: 'United Arab Emirates' },
+  { code: 'EG', label: 'Egypt' },
+  { code: 'SA', label: 'Saudi Arabia' },
+  { code: 'JO', label: 'Jordan' },
+  { code: 'LB', label: 'Lebanon' },
 ];
 
+const schema = z.object({
+  idNumber: z.string().min(1, 'ID Number is required'),
+  nationality: z.string().min(1, 'Nationality is required'),
+});
+
+type FormValues = z.infer<typeof schema>;
+
 const IdForm: React.FC<IdFormProps> = ({ value, onChange }) => {
-  const [localValue, setLocalValue] = useState<IdInfo>(value);
+  const id = useId();
+
+  const { register, handleSubmit, control } = useForm<FormValues>({
+    mode: 'onChange',
+    resolver: zodResolver(schema),
+    defaultValues: {
+      idNumber: value.idNumber ?? '',
+      nationality: value.nationality ?? '',
+    },
+  });
+
+  const { errors, isValid } = useFormState({ control });
+
+  const watchedValues = useWatch({ control });
 
   useEffect(() => {
-    const isValid =
-      localValue.idNumber.trim() !== "" && localValue.nationality.trim() !== "";
-    onChange(localValue, isValid);
-  }, [localValue, onChange]);
+    onChange(watchedValues, isValid);
+  }, [watchedValues, isValid]);
 
   return (
-    <form
-      className={styles.form}
-      onSubmit={(e) => e.preventDefault()}
-      aria-label="ID Form"
-    >
+    <form className={styles.form} onSubmit={(e) => e.preventDefault()} aria-label="ID Form">
       <div className={styles.inputGroup}>
-        <label htmlFor="idNumber" className={styles.label}>
+        <label htmlFor={id} className={styles.label}>
           ID Number
         </label>
-        <input
-          id="idNumber"
-          className={styles.input}
-          value={localValue.idNumber}
-          onChange={(e) =>
-            setLocalValue({ ...localValue, idNumber: e.target.value })
-          }
-        />
-        {localValue.idNumber === "" && (
-          <span className={styles.error} role="alert">
-            Required
-          </span>
-        )}
+        <input className={styles.input} placeholder="Enter ID number" {...register('idNumber')} />
+        {errors && <div className={styles.error}>{errors.idNumber?.message}</div>}
       </div>
 
       <div className={styles.inputGroup}>
-        <label htmlFor="nationality" className={styles.label}>
+        <label htmlFor={`${id}-nationality`} className={styles.label}>
           Nationality
         </label>
-        <select
-          id="nationality"
-          className={styles.select}
-          value={localValue.nationality}
-          onChange={(e) =>
-            setLocalValue({ ...localValue, nationality: e.target.value })
-          }
-        >
+        <select id={`${id}-nationality`} className={styles.select} {...register('nationality')}>
           <option value="">Select nationality</option>
           {nationalities.map((n) => (
             <option key={n.code} value={n.code}>
@@ -63,9 +62,9 @@ const IdForm: React.FC<IdFormProps> = ({ value, onChange }) => {
             </option>
           ))}
         </select>
-        {localValue.nationality === "" && (
+        {errors.nationality && (
           <span className={styles.error} role="alert">
-            Required
+            {errors.nationality.message}
           </span>
         )}
       </div>

@@ -1,8 +1,14 @@
-import { PassportData } from "passport_form/PassportForm";
-import type { IdInfo } from "../IdForm";
+import type { PassportData } from 'passport_form/PassportForm';
+import type { IdInfo } from '../IdForm';
+
+export type StepConfig = {
+  id: string;
+  label: string;
+  render: (props: any) => React.ReactNode;
+  isValid: (state: WizardState) => boolean;
+};
 
 export type WizardState = {
-  step: 1 | 2;
   passport: { valid: boolean; data: PassportData | null };
   idInfo: IdInfo;
   idValid: boolean;

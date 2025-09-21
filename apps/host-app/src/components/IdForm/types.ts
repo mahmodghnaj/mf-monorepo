@@ -1,6 +1,6 @@
 export type IdInfo = {
-  idNumber: string;
-  nationality: string;
+  idNumber?: string;
+  nationality?: string;
 };
 
 export type IdFormProps = {
