@@ -29,7 +29,7 @@ const PassportForm: React.FC<PassportFormProps> = ({ onUpdate, initialData }) =>
   const lastPayload = useRef<{ valid: boolean; data: PassportData | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { register, control, handleSubmit, getValues } = useForm<FormValues>({
+  const { register, control, getValues } = useForm<FormValues>({
     mode: 'onChange',
     resolver: zodResolver(schema),
     defaultValues: {

@@ -21,7 +21,7 @@ const steps: StepConfig[] = [
     id: 'idInfo',
     label: 'ID Info',
     render: ({ state, onIdUpdate }: any) => <IdForm value={state.idInfo} onChange={onIdUpdate} />,
-    isValid: (state) => state.idValid,
+    isValid: (state) => state.idValid && state.passport.valid,
   },
 ];
 
