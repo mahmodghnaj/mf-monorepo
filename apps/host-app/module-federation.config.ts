@@ -5,7 +5,9 @@ export default createModuleFederationConfig({
   remotes: {
     passport_form: 'passport_form@http://localhost:3001/remoteEntry.js',
   },
-  dts: true,
+  dts: {
+    consumeTypes: true,
+  },
   shared: {
     react: {
       singleton: true,

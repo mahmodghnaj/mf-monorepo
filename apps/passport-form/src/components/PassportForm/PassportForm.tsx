@@ -3,8 +3,7 @@ import { useForm, Controller, useFormState, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import styles from './index.module.css';
-import type { PassportData } from '../../types/passport';
-import type { PassportFormProps } from './types';
+import type { PassportFormProps, PassportData } from './types';
 import { fileToBase64, fileSchema } from '../../utils/file';
 import InputField from './InputField';
 
